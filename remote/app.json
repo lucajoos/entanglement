@@ -1,0 +1,12 @@
+{
+  "name": "remote",
+  "displayName": "remote",
+  "expo": {
+    "name": "remote",
+    "slug": "remote",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
