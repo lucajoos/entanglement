@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --color-background-default: #FFFFFC;
+    --color-background-accent: #eae9e9;
+
+    --color-text-default: #001F52;
+    --color-text-accent: #002F7A;
+}
+
+*::-webkit-scrollbar {
+    width: 7.5px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--color-text-default);
+    border-radius: 9999px;
+}
+
+body {
+    min-width: 450px;
+    min-height: 600px;
+
+    font-size: 16px;
+
+    @apply text-text-default;
+}
+
+* {
+    outline: none !important;
+}
