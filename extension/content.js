@@ -47,8 +47,19 @@
             if(
                 window.location.href.startsWith('https://www.netflix.com/watch/')
             ) {
-                const element = await observe('h4.ellipsize-text');
-                meta.title = element.innerHTML || 'Unknown';
+                const information = await observe('.ellipsize-text');
+                let title;
+
+                meta.additional = null;
+
+                if(information.tagName === 'DIV') {
+                    title = information.querySelector('h4');
+                    meta.additional = [...information.querySelectorAll('span')].map(element => element.innerHTML).join(' ');
+                } else {
+                    title = information;
+                }
+
+                meta.title = title.innerHTML || 'Unknown';
                 meta.provider = 'Netflix';
                 meta.isResolved = true;
             } else if(
