@@ -8,20 +8,24 @@
 
         const socket = window.io('http://127.0.0.1:4001');
 
-        let observe = (selector, run) => {
+        let observe = (selector, options) => {
             return new Promise((rs, rj) => {
+                let ar = false;
+
                 if(typeof selector !== 'string') {
                     rj('No selector specified.');
                 }
 
-                let observer = new MutationObserver(function (mutations, self) {
+                let observer = new MutationObserver((mutations, self) => {
                     let element = document.querySelector(selector);
 
-                    if(element) {
+                    if(!options?.isInverted ? element : (!element && ar)) {
                         rs(element);
                         self.disconnect();
                         return true;
                     }
+
+                    ar = true;
                 });
 
                 observer.observe(document, {
@@ -29,8 +33,8 @@
                     subtree: true
                 });
 
-                if(typeof run === 'function') {
-                    run();
+                if(typeof options?.run === 'function') {
+                    options?.run();
                 }
             });
         };
@@ -66,6 +70,42 @@
                 meta.title = element.textContent || 'Unknown';
                 meta.provider = 'YouTube';
                 meta.isResolved = true;
+            } else if(
+                window.location.href.startsWith('https://www.amazon.') &&
+                document.title.startsWith('Amazon') &&
+                document.title.endsWith('| Prime Video')
+            ) {
+                let r = async () => {
+                    await observe('#dv-web-player.dv-player-fullscreen');
+
+                    let element = await observe('div.title');
+
+                    while(element.innerHTML?.length === 0) {
+                        element = await observe('div.title');
+                    }
+
+                    meta.title = element.innerHTML || 'Unknown';
+                    meta.provider = 'Amazon Prime Video';
+                    meta.isResolved = true;
+
+                    socket.emit('resolve', {
+                        href: window.location.href,
+                        ...meta,
+                    });
+
+                    await observe('#dv-web-player.dv-player-fullscreen', {
+                        isInverted: true
+                    });
+
+                    socket.emit('resolve', {
+                        href: window.location.href,
+                        isResolved: false
+                    });
+
+                    await r();
+                }
+
+                await r();
             }
 
             socket.emit('resolve', {
