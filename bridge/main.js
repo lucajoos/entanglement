@@ -1,6 +1,15 @@
-const {app, BrowserWindow} = require('electron');
-const {URL} = require('./modules/constants')
+const { app, BrowserWindow } = require('electron');
+const { URL } = require('./modules/constants');
 const Store = require('electron-store');
+
+const express = require('express')();
+const http = require('http').createServer(express);
+const io = require('socket.io')(http, {
+    cors: {
+        origin: '*',
+        methods: [ 'GET', 'POST' ]
+    }
+});
 
 const store = new Store();
 
@@ -30,7 +39,7 @@ let init = () => {
         })
         .catch(e => {
             throw e;
-        })
+        });
 };
 
 app.whenReady().then(() => {
@@ -46,3 +55,11 @@ app.on('activate', () => {
 app.on('window-all-closed', e => {
     e.preventDefault();
 });
+
+io.on('connection', socket => {
+    socket.on('hello', data => {
+        console.log(data);
+    });
+});
+
+http.listen(4001);
