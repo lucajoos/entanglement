@@ -44,7 +44,6 @@
                 window.location.href.startsWith('https://www.netflix.com/watch/')
             ) {
                 const element = await observe('h4.ellipsize-text');
-
                 meta.title = element.innerHTML || 'Unknown';
                 meta.provider = 'Netflix';
                 meta.isResolved = true;
@@ -59,6 +58,13 @@
 
                 meta.title = element.innerHTML || 'Unknown';
                 meta.provider = 'Disney+';
+                meta.isResolved = true;
+            } else if(
+                window.location.href.startsWith('https://www.youtube.com/watch?v=')
+            ) {
+                const element = await observe('#container > h1 > yt-formatted-string');
+                meta.title = element.textContent || 'Unknown';
+                meta.provider = 'YouTube';
                 meta.isResolved = true;
             }
 
