@@ -82,10 +82,9 @@
                 window.location.href.startsWith('https://www.youtube.com/watch?v=')
             ) {
                 const title = await observe('#container > h1 > yt-formatted-string');
-                const additional = await observe('#text > a');
 
                 meta.title = title.textContent || 'Unknown';
-                meta.additional = additional.innerHTML || '';
+                meta.additional = document.querySelector('#text > a').innerHTML || '';
                 meta.type = 0;
                 meta.provider = 'YouTube';
                 meta.isResolved = true;
@@ -104,6 +103,8 @@
                     }
 
                     meta.title = title.innerHTML || 'Unknown';
+                    meta.additional = document.querySelector('.subtitle').innerHTML || '';
+                    meta.type = document.querySelector('.subtitle')?.innerHTML ? 1 : 0;
                     meta.provider = 'Amazon Prime Video';
                     meta.isResolved = true;
 
