@@ -13,6 +13,8 @@ const io = require('socket.io')(http, {
 
 const store = new Store();
 
+let connections = {}
+
 if (!store.get('length')) {
     store.set('length', 0);
 }
@@ -57,8 +59,27 @@ app.on('window-all-closed', e => {
 });
 
 io.on('connection', socket => {
-    socket.on('hello', data => {
-        console.log(data);
+    socket.on('init', object => {
+        connections[socket.id] = {
+            type: object?.type || null
+        };
+
+        let ref = connections[socket.id];
+
+        if(ref?.type === 'extension') {
+            socket.on('resolve', meta => {
+                ref.meta = meta;
+
+                console.log(`You're now watching ${meta?.title} on ${meta?.provider}`)
+            })
+        } else if(ref?.type === 'remote') {
+
+        }
+
+        socket.on('disconnect', () => {
+            console.log(`Stopped watching ${connections[socket.id]?.title} on ${connections[socket.id]?.provider}`);
+            delete connections[socket.id];
+        })
     });
 });
 
