@@ -8,7 +8,7 @@
 
         const socket = window.io('http://127.0.0.1:4001');
 
-        let observe = selector => {
+        let observe = (selector, run) => {
             return new Promise((rs, rj) => {
                 if(typeof selector !== 'string') {
                     rj('No selector specified.');
@@ -28,6 +28,10 @@
                     childList: true,
                     subtree: true
                 });
+
+                if(typeof run === 'function') {
+                    run();
+                }
             });
         };
 
@@ -43,13 +47,25 @@
 
                 meta.title = element.innerHTML || 'Unknown';
                 meta.provider = 'Netflix';
-                meta.href = window.location.href;
+                meta.isResolved = true;
+            } else if(
+                window.location.href.startsWith('https://www.disneyplus.com/video/')
+            ) {
+                await observe('video');
+
+                const element = await observe('div.title-field', () => {
+                    document.dispatchEvent(new Event('mousemove'));
+                });
+
+                meta.title = element.innerHTML || 'Unknown';
+                meta.provider = 'Disney+';
                 meta.isResolved = true;
             }
 
-            if(meta.isResolved) {
-                socket.emit('resolve', meta);
-            }
+            socket.emit('resolve', {
+                href: window.location.href,
+                ...meta,
+            });
         };
 
         socket.on('connect', () => {
