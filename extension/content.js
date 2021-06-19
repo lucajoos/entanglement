@@ -44,19 +44,22 @@
                 isResolved: false
             };
 
+            console.log('YEAH?')
             if(
                 window.location.href.startsWith('https://www.netflix.com/watch/')
             ) {
                 const information = await observe('.ellipsize-text');
                 let title;
 
-                meta.additional = null;
+                meta.additional = '';
 
                 if(information.tagName === 'DIV') {
                     title = information.querySelector('h4');
                     meta.additional = [...information.querySelectorAll('span')].map(element => element.innerHTML).join(' ');
+                    meta.type = 1;
                 } else {
                     title = information;
+                    meta.type = 0;
                 }
 
                 meta.title = title.innerHTML || 'Unknown';
@@ -72,6 +75,8 @@
                 });
 
                 meta.title = element.innerHTML || 'Unknown';
+                meta.additional = document.querySelector('.subtitle-field')?.innerHTML || '';
+                meta.type = document.querySelector('.subtitle-field')?.innerHTML ? 1 : 0;
                 meta.provider = 'Disney+';
                 meta.isResolved = true;
             } else if(
