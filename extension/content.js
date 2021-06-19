@@ -44,7 +44,6 @@
                 isResolved: false
             };
 
-            console.log('YEAH?')
             if(
                 window.location.href.startsWith('https://www.netflix.com/watch/')
             ) {
@@ -55,7 +54,7 @@
 
                 if(information.tagName === 'DIV') {
                     title = information.querySelector('h4');
-                    meta.additional = [...information.querySelectorAll('span')].map(element => element.innerHTML).join(' ');
+                    meta.additional = [ ...information.querySelectorAll('span') ].map(element => element.innerHTML).join(' ');
                     meta.type = 1;
                 } else {
                     title = information;
@@ -70,11 +69,11 @@
             ) {
                 await observe('video');
 
-                const element = await observe('div.title-field', () => {
+                const title = await observe('div.title-field', () => {
                     document.dispatchEvent(new Event('mousemove'));
                 });
 
-                meta.title = element.innerHTML || 'Unknown';
+                meta.title = title.innerHTML || 'Unknown';
                 meta.additional = document.querySelector('.subtitle-field')?.innerHTML || '';
                 meta.type = document.querySelector('.subtitle-field')?.innerHTML ? 1 : 0;
                 meta.provider = 'Disney+';
@@ -82,8 +81,12 @@
             } else if(
                 window.location.href.startsWith('https://www.youtube.com/watch?v=')
             ) {
-                const element = await observe('#container > h1 > yt-formatted-string');
-                meta.title = element.textContent || 'Unknown';
+                const title = await observe('#container > h1 > yt-formatted-string');
+                const additional = await observe('#text > a');
+
+                meta.title = title.textContent || 'Unknown';
+                meta.additional = additional.innerHTML || '';
+                meta.type = 0;
                 meta.provider = 'YouTube';
                 meta.isResolved = true;
             } else if(
@@ -94,13 +97,13 @@
                 let r = async () => {
                     await observe('#dv-web-player.dv-player-fullscreen');
 
-                    let element = await observe('div.title');
+                    let title = await observe('div.title');
 
-                    while(element.innerHTML?.length === 0) {
-                        element = await observe('div.title');
+                    while (title.innerHTML?.length === 0) {
+                        title = await observe('div.title');
                     }
 
-                    meta.title = element.innerHTML || 'Unknown';
+                    meta.title = title.innerHTML || 'Unknown';
                     meta.provider = 'Amazon Prime Video';
                     meta.isResolved = true;
 
@@ -119,7 +122,7 @@
                     });
 
                     await r();
-                }
+                };
 
                 await r();
             }
