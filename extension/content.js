@@ -71,6 +71,7 @@
 
         let resolve = async () => {
             let isRunning = null;
+            let isMuted = null;
 
             let meta = {
                 isResolved: false
@@ -109,6 +110,33 @@
                     if(hasChanged) {
                         socket.emit('player', {
                             isRunning: isRunning
+                        });
+                    }
+                });
+
+                isMuted = document.querySelector('.PlayerControlsNeo__button-control-row > *:nth-child(4) > button')?.classList.contains('button-volumeMuted');
+
+                currentObserverCleanup = observe('.PlayerControlsNeo__button-control-row > *:nth-child(4) > button', element => {
+                    let hasChanged = false;
+
+                    if(
+                        (
+                            element?.classList.contains('button-volumeLow') ||
+                            element?.classList.contains('button-volumeMedium') ||
+                            element?.classList.contains('button-volumeMax')
+                        ) &&
+                        isMuted
+                    ) {
+                        hasChanged = true;
+                        isMuted = false;
+                    } else if(element?.classList.contains('button-volumeMuted') && !isMuted) {
+                        hasChanged = true;
+                        isMuted = true;
+                    }
+
+                    if(hasChanged) {
+                        socket.emit('player', {
+                            isMuted: isMuted
                         });
                     }
                 });
@@ -258,7 +286,10 @@
             });
 
             if(meta?.isResolved) {
-
+                socket.emit('player', {
+                    isRunning: isRunning,
+                    isMuted: isMuted
+                });
             }
         };
 
