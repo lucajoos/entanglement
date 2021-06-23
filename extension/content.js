@@ -175,6 +175,8 @@
                     }
                 });
 
+                await detect('#text > a');
+
                 meta.title = title.textContent || 'Unknown';
                 meta.additional = document.querySelector('#text > a').innerHTML || '';
                 meta.type = 0;
@@ -256,9 +258,7 @@
             });
 
             if(meta?.isResolved) {
-                socket.emit('player', {
-                    isRunning: isRunning
-                });
+
             }
         };
 
