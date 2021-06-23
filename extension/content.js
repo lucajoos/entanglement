@@ -116,10 +116,20 @@
                 const title = await detect('#container > h1 > yt-formatted-string');
 
                 currentObserverCleanup = observe('.html5-video-player', element => {
+                    let hasChanged = false;
+
                     if(element?.classList.contains('playing-mode') && !isRunning) {
+                        hasChanged = true;
                         isRunning = true;
                     } else if(element?.classList.contains('paused-mode') && isRunning) {
+                        hasChanged = true;
                         isRunning = false;
+                    }
+
+                    if(hasChanged) {
+                        socket.emit('player', {
+                            isRunning: isRunning
+                        });
                     }
                 });
 
@@ -177,6 +187,12 @@
                 href: window.location.href,
                 ...meta,
             });
+
+            if(meta?.isResolved) {
+                socket.emit('player', {
+                    isRunning: isRunning
+                });
+            }
         };
 
         socket.on('connect', () => {

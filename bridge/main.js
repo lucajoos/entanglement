@@ -62,6 +62,10 @@ io.on('connection', socket => {
     socket.on('init', object => {
         connections[socket.id] = {
             type: object?.type || null,
+            player: {
+                isRunning: false,
+                isMuted: false
+            },
             meta: {}
         };
 
@@ -76,7 +80,7 @@ io.on('connection', socket => {
                     connections[socket.id].meta = meta;
                     console.log(meta)
 
-                    //console.log(`You're now watching ${meta?.title} on ${meta?.provider}`)
+                    //console.log(`You're now watching ${meta?.title} on ${meta?.provider}`);
                 } else {
                     if(connections[socket.id]?.meta?.provider) {
                         stop();
@@ -84,7 +88,14 @@ io.on('connection', socket => {
 
                     connections[socket.id].meta = {};
                 }
-            })
+            });
+
+            socket.on('player', options => {
+                if(typeof options === 'object') {
+                    // console.log('Playback state changed');
+                    connections[socket.id].player = Object.assign(connections[socket.id].player, options);
+                }
+            });
         } else if(connections[socket.id]?.type === 'remote') {
 
         }
