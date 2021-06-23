@@ -247,6 +247,26 @@
                     }
                 });
 
+                isMuted = !document.querySelector('.ytp-mute-button > svg > defs');
+
+                observerCleanups.isMuted.current = observe('.ytp-mute-button', element => {
+                    let hasChanged = false;
+
+                    if(!!element.querySelector('svg > defs') && isMuted) {
+                        hasChanged = true;
+                        isMuted = false;
+                    } else if(!element.querySelector('svg > defs') && !isMuted) {
+                        hasChanged = true;
+                        isMuted = true;
+                    }
+
+                    if(hasChanged) {
+                        socket.emit('player', {
+                            isMuted: isMuted
+                        });
+                    }
+                });
+
                 await detect('#text > a');
 
                 meta.title = title.textContent || 'Unknown';
