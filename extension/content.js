@@ -1,6 +1,8 @@
 (() => {
     window.addEventListener('load', () => {
         let currentLocation = window.location.href;
+        let currentObserverCleanup = () => {};
+        let previousObserverCleanup = () => {};
 
         if(!window?.io) {
             throw new Error('Socket.io not initialized globally');
@@ -9,16 +11,29 @@
         const socket = window.io('http://127.0.0.1:4001');
 
         let observe = (selector, callback) => {
+            let r = () => {};
+
             if(typeof selector === 'string' && typeof callback === 'function') {
                 let observer = new MutationObserver((mutations, self) => {
-                    callback();
+                    let element = document.querySelector(selector);
+
+                    if(!element) {
+                        self.disconnect();
+                    }
+
+                    callback(element);
                 });
 
                 observer.observe(document.querySelector(selector), {
-                    childList: true,
-                    subtree: true
+                    attributes: true
                 });
+
+                r = () => {
+                    observer.disconnect();
+                }
             }
+
+            return r;
         }
 
         let detect = (selector, options) => {
@@ -55,6 +70,8 @@
         };
 
         let resolve = async () => {
+            let isRunning = true;
+
             let meta = {
                 isResolved: false
             };
@@ -97,6 +114,14 @@
                 window.location.href.startsWith('https://www.youtube.com/watch?v=')
             ) {
                 const title = await detect('#container > h1 > yt-formatted-string');
+
+                currentObserverCleanup = observe('.html5-video-player', element => {
+                    if(element?.classList.contains('playing-mode') && !isRunning) {
+                        isRunning = true;
+                    } else if(element?.classList.contains('paused-mode') && isRunning) {
+                        isRunning = false;
+                    }
+                });
 
                 meta.title = title.textContent || 'Unknown';
                 meta.additional = document.querySelector('#text > a').innerHTML || '';
@@ -141,6 +166,11 @@
                 };
 
                 await r();
+            }
+
+            if(typeof previousObserverCleanup === 'function') {
+                previousObserverCleanup();
+                previousObserverCleanup = currentObserverCleanup;
             }
 
             socket.emit('resolve', {
