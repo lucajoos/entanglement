@@ -14,18 +14,18 @@
             let r = () => {};
 
             if(typeof selector === 'string' && typeof callback === 'function') {
-                let observer = new MutationObserver((mutations, self) => {
+                let observer = new MutationObserver((_, self) => {
                     let element = document.querySelector(selector);
 
-                    if(!element) {
-                        self.disconnect();
+                    if(element) {
+                        callback(element);
                     }
-
-                    callback(element);
                 });
 
                 observer.observe(document.querySelector(selector), {
-                    attributes: true
+                    attributes: true,
+                    subtree: true,
+                    childList: true
                 });
 
                 r = () => {
@@ -45,7 +45,7 @@
                         rj('No selector specified.');
                     }
 
-                    let observer = new MutationObserver((mutations, self) => {
+                    let observer = new MutationObserver((_, self) => {
                         let element = document.querySelector(selector);
 
                         if(!options?.isInverted ? element : (!element && ar)) {
@@ -70,7 +70,7 @@
         };
 
         let resolve = async () => {
-            let isRunning = true;
+            let isRunning = null;
 
             let meta = {
                 isResolved: false
@@ -105,6 +105,26 @@
                     document.dispatchEvent(new Event('mousemove'));
                 });
 
+                isRunning = document.querySelector('.control-icon-btn.play-pause-icon')?.classList.contains('pause-icon');
+
+                currentObserverCleanup = observe('.btm-media-player', element => {
+                    let hasChanged = false;
+
+                    if(element.querySelector('.control-icon-btn.play-pause-icon')?.classList.contains('pause-icon') && !isRunning) {
+                        hasChanged = true;
+                        isRunning = true;
+                    } else if(element.querySelector('.control-icon-btn.play-pause-icon')?.classList.contains('play-icon') && isRunning) {
+                        hasChanged = true;
+                        isRunning = false;
+                    }
+
+                    if(hasChanged) {
+                        socket.emit('player', {
+                            isRunning: isRunning
+                        });
+                    }
+                });
+
                 meta.title = title.innerHTML || 'Unknown';
                 meta.additional = document.querySelector('.subtitle-field')?.innerHTML || '';
                 meta.type = document.querySelector('.subtitle-field')?.innerHTML ? 1 : 0;
@@ -114,6 +134,8 @@
                 window.location.href.startsWith('https://www.youtube.com/watch?v=')
             ) {
                 const title = await detect('#container > h1 > yt-formatted-string');
+
+                isRunning = document.querySelector('.html5-video-player')?.classList.contains('playing-icon');
 
                 currentObserverCleanup = observe('.html5-video-player', element => {
                     let hasChanged = false;

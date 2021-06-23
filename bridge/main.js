@@ -94,6 +94,7 @@ io.on('connection', socket => {
                 if(typeof options === 'object') {
                     // console.log('Playback state changed');
                     connections[socket.id].player = Object.assign(connections[socket.id].player, options);
+                    console.log(options)
                 }
             });
         } else if(connections[socket.id]?.type === 'remote') {
