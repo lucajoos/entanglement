@@ -173,6 +173,26 @@
                     }
                 });
 
+                isMuted = document.querySelector('.audio-control')?.classList.contains('muted-true');
+
+                currentObserverCleanup = observe('.audio-control', element => {
+                    let hasChanged = false;
+
+                    if(element?.classList.contains('muted-false') && isMuted) {
+                        hasChanged = true;
+                        isMuted = false;
+                    } else if(element?.classList.contains('muted-true') && !isMuted) {
+                        hasChanged = true;
+                        isMuted = true;
+                    }
+
+                    if(hasChanged) {
+                        socket.emit('player', {
+                            isMuted: isMuted
+                        });
+                    }
+                });
+
                 meta.title = title.innerHTML || 'Unknown';
                 meta.additional = document.querySelector('.subtitle-field')?.innerHTML || '';
                 meta.type = document.querySelector('.subtitle-field')?.innerHTML ? 1 : 0;
