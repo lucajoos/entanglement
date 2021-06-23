@@ -61,23 +61,39 @@ app.on('window-all-closed', e => {
 io.on('connection', socket => {
     socket.on('init', object => {
         connections[socket.id] = {
-            type: object?.type || null
+            type: object?.type || null,
+            meta: {}
         };
 
-        let ref = connections[socket.id];
+        let stop = () => {
+            //console.log(`Stopped watching ${connections[socket.id]?.meta.title} on ${connections[socket.id]?.meta.provider}`);
+            console.log(connections[socket.id].meta)
+        }
 
-        if(ref?.type === 'extension') {
+        if(connections[socket.id]?.type === 'extension') {
             socket.on('resolve', meta => {
-                ref.meta = meta;
+                if(meta?.isResolved) {
+                    connections[socket.id].meta = meta;
+                    console.log(meta)
 
-                console.log(`You're now watching ${meta?.title} on ${meta?.provider}`)
+                    //console.log(`You're now watching ${meta?.title} on ${meta?.provider}`)
+                } else {
+                    if(connections[socket.id]?.meta?.provider) {
+                        stop();
+                    }
+
+                    connections[socket.id].meta = {};
+                }
             })
-        } else if(ref?.type === 'remote') {
+        } else if(connections[socket.id]?.type === 'remote') {
 
         }
 
         socket.on('disconnect', () => {
-            console.log(`Stopped watching ${connections[socket.id]?.title} on ${connections[socket.id]?.provider}`);
+            if(connections[socket.id]?.meta?.provider) {
+                stop();
+            }
+
             delete connections[socket.id];
         })
     });

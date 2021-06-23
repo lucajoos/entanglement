@@ -8,35 +8,50 @@
 
         const socket = window.io('http://127.0.0.1:4001');
 
-        let observe = (selector, options) => {
-            return new Promise((rs, rj) => {
-                let ar = false;
-
-                if(typeof selector !== 'string') {
-                    rj('No selector specified.');
-                }
-
+        let observe = (selector, callback) => {
+            if(typeof selector === 'string' && typeof callback === 'function') {
                 let observer = new MutationObserver((mutations, self) => {
-                    let element = document.querySelector(selector);
-
-                    if(!options?.isInverted ? element : (!element && ar)) {
-                        rs(element);
-                        self.disconnect();
-                        return true;
-                    }
-
-                    ar = true;
+                    callback();
                 });
 
-                observer.observe(document, {
+                observer.observe(document.querySelector(selector), {
                     childList: true,
                     subtree: true
                 });
+            }
+        }
 
-                if(typeof options?.run === 'function') {
-                    options?.run();
-                }
-            });
+        let detect = (selector, options) => {
+            if(typeof selector === 'string') {
+                return new Promise((rs, rj) => {
+                    let ar = false;
+
+                    if(typeof selector !== 'string') {
+                        rj('No selector specified.');
+                    }
+
+                    let observer = new MutationObserver((mutations, self) => {
+                        let element = document.querySelector(selector);
+
+                        if(!options?.isInverted ? element : (!element && ar)) {
+                            rs(element);
+                            self.disconnect();
+                            return true;
+                        }
+
+                        ar = true;
+                    });
+
+                    observer.observe(document, {
+                        childList: true,
+                        subtree: true
+                    });
+
+                    if(typeof options?.run === 'function') {
+                        options?.run();
+                    }
+                });
+            }
         };
 
         let resolve = async () => {
@@ -47,7 +62,7 @@
             if(
                 window.location.href.startsWith('https://www.netflix.com/watch/')
             ) {
-                const information = await observe('.ellipsize-text');
+                const information = await detect('.ellipsize-text');
                 let title;
 
                 meta.additional = '';
@@ -67,9 +82,9 @@
             } else if(
                 window.location.href.startsWith('https://www.disneyplus.com/video/')
             ) {
-                await observe('video');
+                await detect('video');
 
-                const title = await observe('div.title-field', () => {
+                const title = await detect('div.title-field', () => {
                     document.dispatchEvent(new Event('mousemove'));
                 });
 
@@ -81,7 +96,7 @@
             } else if(
                 window.location.href.startsWith('https://www.youtube.com/watch?v=')
             ) {
-                const title = await observe('#container > h1 > yt-formatted-string');
+                const title = await detect('#container > h1 > yt-formatted-string');
 
                 meta.title = title.textContent || 'Unknown';
                 meta.additional = document.querySelector('#text > a').innerHTML || '';
@@ -94,12 +109,12 @@
                 document.title.endsWith('| Prime Video')
             ) {
                 let r = async () => {
-                    await observe('#dv-web-player.dv-player-fullscreen');
+                    await detect('#dv-web-player.dv-player-fullscreen');
 
-                    let title = await observe('div.title');
+                    let title = await detect('div.title');
 
                     while (title.innerHTML?.length === 0) {
-                        title = await observe('div.title');
+                        title = await detect('div.title');
                     }
 
                     meta.title = title.innerHTML || 'Unknown';
@@ -113,7 +128,7 @@
                         ...meta,
                     });
 
-                    await observe('#dv-web-player.dv-player-fullscreen', {
+                    await detect('#dv-web-player.dv-player-fullscreen', {
                         isInverted: true
                     });
 
