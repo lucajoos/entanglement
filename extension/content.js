@@ -205,9 +205,34 @@
                         ...meta,
                     });
 
+                    isRunning = document.querySelector('.pausedOverlay > .buttons > *:nth-child(2)')?.classList.contains('playIcon');
+
+                    currentObserverCleanup = observe('.pausedOverlay > .buttons > *:nth-child(2)', element => {
+                        let hasChanged = false;
+
+                        if(element?.classList.contains('pausedIcon') && !isRunning) {
+                            hasChanged = true;
+                            isRunning = true;
+                        } else if(element?.classList.contains('playIcon') && isRunning) {
+                            hasChanged = true;
+                            isRunning = false;
+                        }
+
+                        if(hasChanged) {
+                            socket.emit('player', {
+                                isRunning: isRunning
+                            });
+                        }
+                    })
+
                     await detect('#dv-web-player.dv-player-fullscreen', {
                         isInverted: true
                     });
+
+                    if(typeof previousObserverCleanup === 'function') {
+                        previousObserverCleanup();
+                        previousObserverCleanup = currentObserverCleanup;
+                    }
 
                     socket.emit('resolve', {
                         href: window.location.href,
