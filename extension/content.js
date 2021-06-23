@@ -1,14 +1,36 @@
 (() => {
     window.addEventListener('load', () => {
         let currentLocation = window.location.href;
-        let currentObserverCleanup = () => {};
-        let previousObserverCleanup = () => {};
+
+        let observerCleanups = {
+            isRunning: {
+                current: () => {},
+                previous: () => {}
+            },
+
+            isMuted: {
+                current: () => {},
+                previous: () => {}
+            }
+        }
 
         if(!window?.io) {
             throw new Error('Socket.io not initialized globally');
         }
 
         const socket = window.io('http://127.0.0.1:4001');
+
+        let cleanup = () => {
+            [...Object.keys(observerCleanups)].forEach(key => {
+                let cleanup = observerCleanups[key];
+
+                if(typeof cleanup?.previous === 'function') {
+                    cleanup.previous();
+                }
+
+                observerCleanups[key].previous = observerCleanups[key].current;
+            });
+        };
 
         let observe = (selector, callback) => {
             let r = () => {};
@@ -70,6 +92,8 @@
         };
 
         let resolve = async () => {
+            cleanup();
+
             let isRunning = null;
             let isMuted = null;
 
@@ -96,7 +120,7 @@
 
                 isRunning = document.querySelector('.PlayerControlsNeo__button-control-row > *:first-child')?.classList.contains('button-nfplayerPause');
 
-                currentObserverCleanup = observe('.PlayerControlsNeo__button-control-row > *:first-child', element => {
+                observerCleanups.isRunning.current = observe('.PlayerControlsNeo__button-control-row > *:first-child', element => {
                     let hasChanged = false;
 
                     if(element?.classList.contains('button-nfplayerPause') && !isRunning) {
@@ -116,7 +140,7 @@
 
                 isMuted = document.querySelector('.PlayerControlsNeo__button-control-row > *:nth-child(4) > button')?.classList.contains('button-volumeMuted');
 
-                currentObserverCleanup = observe('.PlayerControlsNeo__button-control-row > *:nth-child(4) > button', element => {
+                observerCleanups.isMuted.current = observe('.PlayerControlsNeo__button-control-row > *:nth-child(4) > button', element => {
                     let hasChanged = false;
 
                     if(
@@ -155,7 +179,7 @@
 
                 isRunning = document.querySelector('.control-icon-btn.play-pause-icon')?.classList.contains('pause-icon');
 
-                currentObserverCleanup = observe('.btm-media-player', element => {
+                observerCleanups.isRunning.current = observe('.btm-media-player', element => {
                     let hasChanged = false;
 
                     if(element.querySelector('.control-icon-btn.play-pause-icon')?.classList.contains('pause-icon') && !isRunning) {
@@ -175,7 +199,7 @@
 
                 isMuted = document.querySelector('.audio-control')?.classList.contains('muted-true');
 
-                currentObserverCleanup = observe('.audio-control', element => {
+                observerCleanups.isMuted.current = observe('.audio-control', element => {
                     let hasChanged = false;
 
                     if(element?.classList.contains('muted-false') && isMuted) {
@@ -205,7 +229,7 @@
 
                 isRunning = document.querySelector('.html5-video-player')?.classList.contains('playing-icon');
 
-                currentObserverCleanup = observe('.html5-video-player', element => {
+                observerCleanups.isRunning.current = observe('.html5-video-player', element => {
                     let hasChanged = false;
 
                     if(element?.classList.contains('playing-mode') && !isRunning) {
@@ -257,7 +281,7 @@
 
                     isRunning = document.querySelector('.pausedOverlay > .buttons > *:nth-child(2)')?.classList.contains('playIcon');
 
-                    currentObserverCleanup = observe('.pausedOverlay > .buttons > *:nth-child(2)', element => {
+                    observerCleanups.isRunning.current = observe('.pausedOverlay > .buttons > *:nth-child(2)', element => {
                         let hasChanged = false;
 
                         if(element?.classList.contains('pausedIcon') && !isRunning) {
@@ -279,10 +303,7 @@
                         isInverted: true
                     });
 
-                    if(typeof previousObserverCleanup === 'function') {
-                        previousObserverCleanup();
-                        previousObserverCleanup = currentObserverCleanup;
-                    }
+                    cleanup();
 
                     socket.emit('resolve', {
                         href: window.location.href,
@@ -293,11 +314,6 @@
                 };
 
                 await r();
-            }
-
-            if(typeof previousObserverCleanup === 'function') {
-                previousObserverCleanup();
-                previousObserverCleanup = currentObserverCleanup;
             }
 
             socket.emit('resolve', {
