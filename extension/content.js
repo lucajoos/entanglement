@@ -93,6 +93,26 @@
                     meta.type = 0;
                 }
 
+                isRunning = document.querySelector('.PlayerControlsNeo__button-control-row > *:first-child')?.classList.contains('button-nfplayerPause');
+
+                currentObserverCleanup = observe('.PlayerControlsNeo__button-control-row > *:first-child', element => {
+                    let hasChanged = false;
+
+                    if(element?.classList.contains('button-nfplayerPause') && !isRunning) {
+                        hasChanged = true;
+                        isRunning = true;
+                    } else if(element?.classList.contains('button-nfplayerPlay') && isRunning) {
+                        hasChanged = true;
+                        isRunning = false;
+                    }
+
+                    if(hasChanged) {
+                        socket.emit('player', {
+                            isRunning: isRunning
+                        });
+                    }
+                });
+
                 meta.title = title.innerHTML || 'Unknown';
                 meta.provider = 'Netflix';
                 meta.isResolved = true;
